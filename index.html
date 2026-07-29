@@ -1,0 +1,3043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Starlight · GUI Library</title>
+    <style>
+        /* =============================================================
+               STARLIGHT · v2.3 · FIXED SIDEBAR
+               ============================================================= */
+
+        /* ---------- reset & vars ---------- */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* --- core palette --- */
+            --sl-paper: #f5f0e8;
+            --sl-paper-white: #faf7f2;
+            --sl-ink: #1e1c1a;
+            --sl-ink-soft: #3d3a36;
+            --sl-ink-faded: #7a756e;
+            --sl-ink-light: #b0aaa2;
+            --sl-accent: #2a6b7c;
+            --sl-accent-soft: #5a9aa8;
+            --sl-accent-warm: #a8927a;
+            --sl-border: #ddd6cc;
+            --sl-border-light: #e8e2d8;
+            --sl-shadow-card: 0 2px 8px rgba(30, 28, 26, 0.05);
+            --sl-shadow-modal: 0 12px 48px rgba(30, 28, 26, 0.07);
+
+            /* --- sizing --- */
+            --sl-radius: 0px;
+            --sl-header-height: 54px;
+            --sl-sidebar-width: 240px;
+            --sl-transition: 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+            /* --- fonts --- */
+            --sl-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --sl-font-mono: 'JetBrains Mono', 'Space Mono', monospace;
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--sl-font-sans);
+            background: var(--sl-paper);
+            color: var(--sl-ink);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            position: relative;
+            transition: padding-left var(--sl-transition);
+        }
+
+        /* when sidebar is open, push the main content */
+        body.sl-sidebar-open {
+            padding-left: var(--sl-sidebar-width);
+        }
+
+        /* ---------- paper texture ---------- */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.14;
+            background-image:
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 256px 256px;
+            mix-blend-mode: multiply;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse at 30% 20%, rgba(200, 185, 170, 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(180, 165, 150, 0.03) 0%, transparent 50%);
+        }
+
+        /* =============================================================
+               CUSTOM SCROLLBAR — paper hacker style
+               ============================================================= */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--sl-paper);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--sl-border);
+            border-radius: 0px;
+            /* hard edges */;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--sl-ink-light);
+        }
+
+        /* Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--sl-border) var(--sl-paper);
+        }
+
+        /* =============================================================
+               STARLIGHT · UTILITY CLASSES
+               ============================================================= */
+
+        /* --- layout --- */
+        .sl-flex {
+            display: flex;
+            align-items: center;
+        }
+        .sl-flex-wrap {
+            flex-wrap: wrap;
+        }
+        .sl-flex-col {
+            flex-direction: column;
+        }
+        .sl-flex-1 {
+            flex: 1;
+        }
+        .sl-items-start {
+            align-items: flex-start;
+        }
+        .sl-items-end {
+            align-items: flex-end;
+        }
+        .sl-items-center {
+            align-items: center;
+        }
+        .sl-justify-between {
+            justify-content: space-between;
+        }
+        .sl-justify-center {
+            justify-content: center;
+        }
+        .sl-justify-end {
+            justify-content: flex-end;
+        }
+
+        /* --- spacing --- */
+        .sl-gap-1 {
+            gap: 6px;
+        }
+        .sl-gap-2 {
+            gap: 12px;
+        }
+        .sl-gap-3 {
+            gap: 18px;
+        }
+        .sl-gap-4 {
+            gap: 24px;
+        }
+        .sl-gap-6 {
+            gap: 36px;
+        }
+
+        .sl-mt-1 {
+            margin-top: 6px;
+        }
+        .sl-mt-2 {
+            margin-top: 12px;
+        }
+        .sl-mt-3 {
+            margin-top: 18px;
+        }
+        .sl-mt-4 {
+            margin-top: 24px;
+        }
+        .sl-mb-1 {
+            margin-bottom: 6px;
+        }
+        .sl-mb-2 {
+            margin-bottom: 12px;
+        }
+        .sl-mb-3 {
+            margin-bottom: 18px;
+        }
+        .sl-mb-4 {
+            margin-bottom: 24px;
+        }
+        .sl-p-1 {
+            padding: 6px;
+        }
+        .sl-p-2 {
+            padding: 12px;
+        }
+        .sl-p-3 {
+            padding: 18px;
+        }
+        .sl-p-4 {
+            padding: 24px;
+        }
+        .sl-px-2 {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+        .sl-py-2 {
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+
+        /* --- sizing --- */
+        .sl-w-full {
+            width: 100%;
+        }
+        .sl-max-w-sm {
+            max-width: 320px;
+        }
+        .sl-max-w-md {
+            max-width: 480px;
+        }
+        .sl-max-w-lg {
+            max-width: 640px;
+        }
+        .sl-max-w-xl {
+            max-width: 720px;
+        }
+        .sl-max-w-2xl {
+            max-width: 960px;
+        }
+
+        /* --- text --- */
+        .sl-text-center {
+            text-align: center;
+        }
+        .sl-text-mono {
+            font-family: var(--sl-font-mono);
+        }
+        .sl-text-xs {
+            font-size: 10px;
+        }
+        .sl-text-sm {
+            font-size: 12px;
+        }
+        .sl-text-base {
+            font-size: 14px;
+        }
+        .sl-text-lg {
+            font-size: 16px;
+        }
+        .sl-text-faded {
+            color: var(--sl-ink-faded);
+        }
+        .sl-text-soft {
+            color: var(--sl-ink-soft);
+        }
+        .sl-text-accent {
+            color: var(--sl-accent);
+        }
+        .sl-text-ink {
+            color: var(--sl-ink);
+        }
+        .sl-font-light {
+            font-weight: 300;
+        }
+        .sl-font-normal {
+            font-weight: 400;
+        }
+        .sl-font-medium {
+            font-weight: 500;
+        }
+        .sl-font-semibold {
+            font-weight: 600;
+        }
+
+        /* --- borders --- */
+        .sl-border {
+            border: 1px solid var(--sl-border);
+        }
+        .sl-border-t {
+            border-top: 1px solid var(--sl-border);
+        }
+        .sl-border-b {
+            border-bottom: 1px solid var(--sl-border);
+        }
+        .sl-border-l {
+            border-left: 1px solid var(--sl-border);
+        }
+        .sl-border-r {
+            border-right: 1px solid var(--sl-border);
+        }
+        .sl-border-light {
+            border-color: var(--sl-border-light);
+        }
+        .sl-rounded {
+            border-radius: var(--sl-radius);
+        }
+        .sl-rounded-sm {
+            border-radius: 2px;
+        }
+
+        /* --- bg --- */
+        .sl-bg-paper {
+            background: var(--sl-paper-white);
+        }
+        .sl-bg-transparent {
+            background: transparent;
+        }
+
+        /* --- misc --- */
+        .sl-divider {
+            height: 1px;
+            background: var(--sl-border);
+            margin: 16px 0;
+        }
+        .sl-divider-ornament {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 6px 0 2px;
+            opacity: 0.25;
+        }
+        .sl-divider-ornament::before,
+        .sl-divider-ornament::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--sl-border);
+        }
+        .sl-divider-ornament span {
+            font-size: 9px;
+            color: var(--sl-ink-faded);
+            font-family: var(--sl-font-mono);
+            letter-spacing: 0.1em;
+        }
+        .sl-note {
+            font-size: 12px;
+            color: var(--sl-ink-faded);
+            font-weight: 300;
+            padding: 4px 0;
+        }
+        .sl-hidden {
+            display: none !important;
+        }
+        .sl-relative {
+            position: relative;
+        }
+        .sl-absolute {
+            position: absolute;
+        }
+        .sl-overflow-hidden {
+            overflow: hidden;
+        }
+        .sl-overflow-auto {
+            overflow: auto;
+        }
+
+        /* =============================================================
+               STARLIGHT · TOAST
+               ============================================================= */
+        #sl-toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 360px;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        .sl-toast {
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border);
+            padding: 14px 18px;
+            box-shadow: var(--sl-shadow-modal);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+            font-size: 13px;
+            color: var(--sl-ink-soft);
+            border-left: 3px solid var(--sl-accent);
+            transform: translateX(120%);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .sl-toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        .sl-toast.hide {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+        .sl-toast .icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .sl-toast .msg {
+            flex: 1;
+            font-weight: 400;
+        }
+        .sl-toast .close {
+            background: none;
+            border: none;
+            color: var(--sl-ink-faded);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 4px;
+            font-family: var(--sl-font-sans);
+            transition: color 0.2s;
+        }
+        .sl-toast .close:hover {
+            color: var(--sl-ink);
+        }
+
+        /* =============================================================
+               STARLIGHT · HEADER (FIXED, DOES NOT MOVE)
+               ============================================================= */
+        .sl-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--sl-header-height);
+            background: rgba(245, 240, 232, 0.82);
+            backdrop-filter: blur(20px) saturate(1.1);
+            -webkit-backdrop-filter: blur(20px) saturate(1.1);
+            border-bottom: 1px solid var(--sl-border);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 100;
+            gap: 14px;
+            /* Always stays at left: 0, never shifts */
+        }
+
+        .sl-header .sl-menu-btn {
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--sl-border);
+            background: none;
+            cursor: pointer;
+            padding: 6px;
+            color: var(--sl-ink-soft);
+            transition: all 0.2s;
+            border-radius: var(--sl-radius);
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            display: flex;
+        }
+        .sl-header .sl-menu-btn:hover {
+            background: rgba(30, 28, 26, 0.03);
+            border-color: var(--sl-ink-light);
+        }
+        .sl-header .sl-menu-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 1.8;
+        }
+
+        .sl-header .sl-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+        .sl-header .sl-logo-icon {
+            width: 28px;
+            height: 28px;
+            border: 1.5px solid var(--sl-accent);
+            border-radius: var(--sl-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--sl-accent);
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            font-family: var(--sl-font-mono);
+            background: rgba(42, 107, 124, 0.04);
+            transition: all 0.3s;
+        }
+        .sl-header .sl-logo:hover .sl-logo-icon {
+            background: rgba(42, 107, 124, 0.08);
+            box-shadow: 0 0 30px rgba(42, 107, 124, 0.04);
+        }
+        .sl-header .sl-logo-text {
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            color: var(--sl-ink);
+            font-family: var(--sl-font-sans);
+        }
+        .sl-header .sl-logo-text span {
+            color: var(--sl-ink-faded);
+            font-weight: 300;
+            margin-left: 2px;
+        }
+
+        .sl-header .sl-nav {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .sl-header .sl-nav a {
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-decoration: none;
+            color: var(--sl-ink-faded);
+            transition: color 0.2s;
+            font-weight: 400;
+            text-transform: uppercase;
+            font-family: var(--sl-font-mono);
+            padding: 2px 0;
+            border-bottom: 1px solid transparent;
+        }
+        .sl-header .sl-nav a:hover {
+            color: var(--sl-ink);
+            border-bottom-color: var(--sl-accent-soft);
+        }
+        .sl-header .sl-nav a.sl-active {
+            color: var(--sl-ink);
+            border-bottom-color: var(--sl-accent);
+        }
+
+        .sl-header .sl-status {
+            font-size: 9px;
+            color: var(--sl-ink-faded);
+            letter-spacing: 0.06em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--sl-font-mono);
+            font-weight: 300;
+            padding: 3px 12px;
+            border: 1px solid var(--sl-border-light);
+            background: var(--sl-paper-white);
+            flex-shrink: 0;
+        }
+        .sl-header .sl-status .sl-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 0;
+            background: var(--sl-accent);
+            opacity: 0.7;
+            animation: sl-pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes sl-pulse-dot {
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 0.9;
+            }
+        }
+
+        /* =============================================================
+               STARLIGHT · SIDEBAR (FIXED + SLIDES IN/OUT)
+               ============================================================= */
+        .sl-sidebar {
+            position: fixed;
+            top: var(--sl-header-height);
+            left: 0;
+            bottom: 0;
+            width: var(--sl-sidebar-width);
+            background: var(--sl-paper-white);
+            border-right: 1px solid var(--sl-border);
+            box-shadow: 4px 0 32px rgba(30, 28, 26, 0.08);
+            transform: translateX(-100%);
+            transition: transform var(--sl-transition);
+            z-index: 99;
+            overflow-y: auto;
+            padding: 20px 0;
+            will-change: transform;
+        }
+
+        .sl-sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sl-sidebar::-webkit-scrollbar {
+            width: 3px;
+        }
+        .sl-sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sl-sidebar::-webkit-scrollbar-thumb {
+            background: var(--sl-border);
+            border-radius: 0;
+        }
+        .sl-sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--sl-ink-light);
+        }
+
+        .sl-sidebar .sl-section {
+            padding: 0 20px;
+            margin-bottom: 18px;
+        }
+        .sl-sidebar .sl-title {
+            font-size: 8px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--sl-ink-faded);
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-family: var(--sl-font-mono);
+            opacity: 0.7;
+        }
+        .sl-sidebar .sl-menu {
+            list-style: none;
+        }
+        .sl-sidebar .sl-menu li {
+            margin-bottom: 1px;
+        }
+        .sl-sidebar .sl-menu a {
+            display: block;
+            font-size: 12px;
+            letter-spacing: 0.02em;
+            color: var(--sl-ink-soft);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-left: 2px solid transparent;
+            transition: all 0.15s ease;
+            font-weight: 400;
+            font-family: var(--sl-font-sans);
+            position: relative;
+        }
+        .sl-sidebar .sl-menu a::before {
+            content: '';
+            position: absolute;
+            left: -2px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--sl-accent);
+            transform: scaleY(0);
+            transition: transform 0.25s ease;
+            transform-origin: center;
+        }
+        .sl-sidebar .sl-menu a:hover {
+            background: rgba(30, 28, 26, 0.03);
+            color: var(--sl-ink);
+        }
+        .sl-sidebar .sl-menu a.sl-active {
+            color: var(--sl-ink);
+            background: rgba(42, 107, 124, 0.04);
+            border-left-color: var(--sl-accent);
+        }
+        .sl-sidebar .sl-menu a.sl-active::before {
+            transform: scaleY(1);
+        }
+        .sl-sidebar .sl-divider {
+            height: 1px;
+            background: var(--sl-border);
+            margin: 12px 20px;
+            opacity: 0.5;
+        }
+
+        /* =============================================================
+               STARLIGHT · OVERLAY (Mobile only)
+               ============================================================= */
+        .sl-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(30, 28, 26, 0.15);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 98;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .sl-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* =============================================================
+               STARLIGHT · MAIN
+               ============================================================= */
+        .sl-main {
+            margin-top: var(--sl-header-height);
+            padding: 32px 40px 56px;
+            max-width: 820px;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+            z-index: 1;
+            min-height: calc(100vh - var(--sl-header-height));
+        }
+
+        /* =============================================================
+               STARLIGHT · SECTIONS (scrollspy targets)
+               ============================================================= */
+        .sl-section-block {
+            margin-bottom: 52px;
+            opacity: 0;
+            transform: translateY(8px);
+            animation: sl-fade-up 0.5s ease forwards;
+            scroll-margin-top: calc(var(--sl-header-height) + 12px);
+        }
+        .sl-section-block:nth-child(1) {
+            animation-delay: 0.06s;
+        }
+        .sl-section-block:nth-child(2) {
+            animation-delay: 0.10s;
+        }
+        .sl-section-block:nth-child(3) {
+            animation-delay: 0.14s;
+        }
+        .sl-section-block:nth-child(4) {
+            animation-delay: 0.18s;
+        }
+        .sl-section-block:nth-child(5) {
+            animation-delay: 0.22s;
+        }
+
+        @keyframes sl-fade-up {
+            0% {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sl-section-block .sl-header-wrap {
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .sl-section-block .sl-header-wrap::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 40px;
+            height: 1.5px;
+            background: var(--sl-accent);
+            opacity: 0.3;
+        }
+        .sl-section-block .sl-label {
+            font-size: 9px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--sl-ink-faded);
+            margin-bottom: 2px;
+            font-weight: 500;
+            font-family: var(--sl-font-mono);
+        }
+        .sl-section-block .sl-heading {
+            font-size: 24px;
+            font-weight: 300;
+            color: var(--sl-ink);
+            letter-spacing: -0.01em;
+            font-family: var(--sl-font-sans);
+        }
+        .sl-section-block .sl-heading .sl-accent {
+            color: var(--sl-accent);
+            font-weight: 400;
+        }
+
+        /* ---------- component demo wrapper ---------- */
+        .sl-demo {
+            margin-top: 16px;
+        }
+        .sl-demo .sl-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            padding: 16px 20px;
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border-light);
+            border-radius: var(--sl-radius);
+            margin-bottom: 10px;
+        }
+        .sl-demo .sl-code {
+            font-family: var(--sl-font-mono);
+            font-size: 11px;
+            background: var(--sl-paper);
+            padding: 10px 14px;
+            border: 1px solid var(--sl-border-light);
+            border-radius: var(--sl-radius);
+            color: var(--sl-ink-soft);
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .sl-demo .sl-code .sl-tag {
+            color: var(--sl-accent);
+        }
+        .sl-demo .sl-code .sl-attr {
+            color: var(--sl-accent-warm);
+        }
+        .sl-demo .sl-code .sl-val {
+            color: var(--sl-ink);
+        }
+
+        /* =============================================================
+               STARLIGHT · COMPONENT STYLES
+               ============================================================= */
+
+        /* --- grid --- */
+        .sl-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+        }
+        .sl-grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .sl-grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .sl-grid-4 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        /* --- card --- */
+        .sl-card {
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            padding: 20px 22px;
+            transition: all 0.25s ease;
+            box-shadow: var(--sl-shadow-card);
+            position: relative;
+        }
+        .sl-card:hover {
+            box-shadow: 0 4px 20px rgba(30, 28, 26, 0.06);
+            border-color: #d0c8be;
+        }
+        .sl-card .sl-card-label {
+            font-size: 8px;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: var(--sl-ink-faded);
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-family: var(--sl-font-mono);
+        }
+        .sl-card .sl-card-value {
+            font-size: 32px;
+            font-weight: 300;
+            color: var(--sl-ink);
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+            font-family: var(--sl-font-sans);
+        }
+        .sl-card .sl-card-value .sl-unit {
+            font-size: 15px;
+            font-weight: 300;
+            color: var(--sl-ink-faded);
+            margin-left: 3px;
+        }
+        .sl-card .sl-card-meta {
+            font-size: 11.5px;
+            color: var(--sl-ink-soft);
+            line-height: 1.5;
+            font-family: var(--sl-font-sans);
+            font-weight: 300;
+        }
+
+        /* --- meter --- */
+        .sl-meter {
+            width: 100%;
+            height: 3px;
+            background: var(--sl-border-light);
+            overflow: hidden;
+            margin: 8px 0 6px;
+        }
+        .sl-meter .sl-fill {
+            height: 100%;
+            background: var(--sl-accent);
+            transition: width 1.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+            opacity: 0.7;
+            width: 0%;
+        }
+        .sl-meter .sl-fill.sl-animated {
+            animation: sl-meter-grow 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+        }
+        @keyframes sl-meter-grow {
+            from {
+                width: 0%;
+            }
+            to {
+                width: var(--sl-target, 0%);
+            }
+        }
+
+        /* --- list --- */
+        .sl-list {
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            overflow: hidden;
+            box-shadow: var(--sl-shadow-card);
+        }
+        .sl-list .sl-item {
+            padding: 14px 22px;
+            border-bottom: 1px solid var(--sl-border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.15s;
+        }
+        .sl-list .sl-item:last-child {
+            border-bottom: none;
+        }
+        .sl-list .sl-item:hover {
+            background: rgba(245, 240, 232, 0.4);
+        }
+        .sl-list .sl-item .sl-item-label {
+            font-size: 8px;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: var(--sl-ink-faded);
+            margin-bottom: 1px;
+            font-weight: 600;
+            font-family: var(--sl-font-mono);
+        }
+        .sl-list .sl-item .sl-item-title {
+            font-size: 13px;
+            color: var(--sl-ink);
+            font-weight: 400;
+            font-family: var(--sl-font-sans);
+        }
+
+        /* --- badge --- */
+        .sl-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 8px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 3px 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            font-family: var(--sl-font-mono);
+            border: 1px solid var(--sl-border);
+            background: var(--sl-paper-white);
+            color: var(--sl-ink-soft);
+        }
+        .sl-badge.sl-active {
+            border-color: var(--sl-accent);
+            color: var(--sl-accent);
+            background: rgba(42, 107, 124, 0.04);
+        }
+        .sl-badge.sl-active .sl-dot {
+            width: 4px;
+            height: 4px;
+            background: var(--sl-accent);
+            opacity: 0.7;
+        }
+        .sl-badge.sl-scheduled {
+            border-color: var(--sl-accent-warm);
+            color: var(--sl-accent-warm);
+            background: rgba(168, 146, 122, 0.04);
+        }
+        .sl-badge.sl-scheduled .sl-dot {
+            width: 4px;
+            height: 4px;
+            background: var(--sl-accent-warm);
+            opacity: 0.7;
+        }
+        .sl-badge.sl-complete {
+            border-color: var(--sl-ink-light);
+            color: var(--sl-ink-faded);
+        }
+        .sl-badge.sl-complete .sl-dot {
+            width: 4px;
+            height: 4px;
+            background: var(--sl-ink-faded);
+            opacity: 0.5;
+        }
+        .sl-badge.sl-warning {
+            border-color: #c9a87a;
+            color: #8a7a5a;
+            background: rgba(201, 168, 122, 0.06);
+        }
+        .sl-badge.sl-warning .sl-dot {
+            width: 4px;
+            height: 4px;
+            background: #c9a87a;
+            opacity: 0.7;
+        }
+
+        /* --- button --- */
+        .sl-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 18px;
+            border-radius: var(--sl-radius);
+            border: 1px solid var(--sl-border);
+            font-size: 11px;
+            font-weight: 450;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-family: var(--sl-font-sans);
+            background: var(--sl-paper-white);
+            color: var(--sl-ink-soft);
+            box-shadow: var(--sl-shadow-card);
+            user-select: none;
+            white-space: nowrap;
+        }
+        .sl-btn:active {
+            transform: scale(0.97);
+        }
+        .sl-btn.sl-primary {
+            background: var(--sl-accent);
+            color: #fff;
+            border-color: var(--sl-accent);
+            box-shadow: 0 2px 12px rgba(42, 107, 124, 0.08);
+        }
+        .sl-btn.sl-primary:hover {
+            background: #1f5a6a;
+            border-color: #1f5a6a;
+            box-shadow: 0 4px 20px rgba(42, 107, 124, 0.12);
+            transform: translateY(-1px);
+        }
+        .sl-btn.sl-secondary {
+            background: var(--sl-paper-white);
+            color: var(--sl-ink-soft);
+            border-color: var(--sl-border);
+        }
+        .sl-btn.sl-secondary:hover {
+            background: var(--sl-paper);
+            border-color: #d0c8be;
+            color: var(--sl-ink);
+        }
+        .sl-btn.sl-ghost {
+            background: transparent;
+            color: var(--sl-ink-faded);
+            border-color: transparent;
+            box-shadow: none;
+        }
+        .sl-btn.sl-ghost:hover {
+            background: rgba(30, 28, 26, 0.02);
+            color: var(--sl-ink);
+            border-color: var(--sl-border-light);
+        }
+        .sl-btn.sl-danger {
+            background: #b15a5a;
+            color: #fff;
+            border-color: #b15a5a;
+        }
+        .sl-btn.sl-danger:hover {
+            background: #9a4a4a;
+            border-color: #9a4a4a;
+        }
+        .sl-btn.sl-success {
+            background: #5a8a6a;
+            color: #fff;
+            border-color: #5a8a6a;
+        }
+        .sl-btn.sl-success:hover {
+            background: #4a7a5a;
+            border-color: #4a7a5a;
+        }
+        .sl-btn.sl-sm {
+            padding: 4px 12px;
+            font-size: 10px;
+        }
+        .sl-btn.sl-lg {
+            padding: 10px 24px;
+            font-size: 13px;
+        }
+        .sl-btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            transform: none !important;
+        }
+        .sl-btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* =============================================================
+               STARLIGHT · CYBERDECK PER-FIELD DOORS
+               ============================================================= */
+
+        /* ---- the field wrapper ---- */
+        .sl-deck-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sl-deck-field .sl-label {
+            font-size: 9px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--sl-ink-faded);
+            font-weight: 500;
+            font-family: var(--sl-font-mono);
+            padding-left: 2px;
+        }
+
+        /* ---- the slot that holds the door ---- */
+        .sl-deck-slot {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--sl-border);
+            background: var(--sl-paper-white);
+            border-radius: var(--sl-radius);
+            min-height: 40px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .sl-deck-slot:focus-within {
+            border-color: var(--sl-accent-soft);
+            box-shadow: 0 0 0 2px rgba(42, 107, 124, 0.04);
+        }
+
+        /* ---- the actual input (always visible underneath) ---- */
+        .sl-deck-slot .sl-input,
+        .sl-deck-slot .sl-select,
+        .sl-deck-slot .sl-textarea {
+            border: none;
+            box-shadow: none;
+            background: transparent;
+            padding: 8px 12px;
+            width: 100%;
+            font-size: 13px;
+            font-family: var(--sl-font-sans);
+            color: var(--sl-ink);
+            position: relative;
+            z-index: 1;
+            border-radius: 0;
+            min-height: 40px;
+            resize: vertical;
+        }
+
+        .sl-deck-slot .sl-textarea {
+            min-height: 80px;
+            font-family: var(--sl-font-mono);
+            font-size: 12px;
+        }
+
+        .sl-deck-slot .sl-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a756e'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+            cursor: pointer;
+        }
+
+        .sl-deck-slot .sl-input:focus,
+        .sl-deck-slot .sl-select:focus,
+        .sl-deck-slot .sl-textarea:focus {
+            outline: none;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        /* ---- the sliding door ---- */
+        .sl-deck-door {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            cursor: pointer;
+            transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+            transform: translateY(0);
+            will-change: transform;
+            box-shadow: 0 2px 8px rgba(30, 28, 26, 0.02);
+            color: var(--sl-ink-faded);
+            font-family: var(--sl-font-mono);
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .sl-deck-door .sl-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sl-deck-door .sl-left .sl-dot {
+            width: 5px;
+            height: 5px;
+            background: var(--sl-accent);
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: sl-pulse-dot 1.5s ease-in-out infinite;
+        }
+
+        .sl-deck-door .sl-left .sl-label {
+            font-weight: 400;
+            color: var(--sl-ink-faded);
+        }
+
+        .sl-deck-door .sl-grip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+
+        .sl-deck-door .sl-grip svg {
+            stroke: var(--sl-ink);
+            stroke-width: 1.8;
+        }
+
+        .sl-deck-door .sl-grip .sl-line {
+            width: 16px;
+            height: 2px;
+            background: var(--sl-border);
+            border-radius: 2px;
+        }
+
+        /* ---- hover/focus: slide door UP ---- */
+        .sl-deck-field:hover .sl-deck-door,
+        .sl-deck-field:focus-within .sl-deck-door {
+            transform: translateY(-100%);
+        }
+
+        /* ---- when the door is hidden, the slot border matches the input ---- */
+        .sl-deck-field:hover .sl-deck-slot,
+        .sl-deck-field:focus-within .sl-deck-slot {
+            border-color: var(--sl-accent-soft);
+        }
+
+        /* =============================================================
+               STARLIGHT · FORM (non-cyberdeck)
+               ============================================================= */
+        .sl-form-group {
+            margin-bottom: 14px;
+        }
+        .sl-form-group .sl-label {
+            display: block;
+            font-size: 9px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--sl-ink-faded);
+            margin-bottom: 3px;
+            font-weight: 500;
+            font-family: var(--sl-font-mono);
+        }
+        .sl-input,
+        .sl-textarea,
+        .sl-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            font-size: 13px;
+            font-family: var(--sl-font-sans);
+            color: var(--sl-ink);
+            transition: all 0.2s ease;
+            background: var(--sl-paper-white);
+            box-shadow: inset 0 1px 3px rgba(30, 28, 26, 0.02);
+        }
+        .sl-input:focus,
+        .sl-textarea:focus,
+        .sl-select:focus {
+            outline: none;
+            border-color: var(--sl-accent-soft);
+            background: #faf8f5;
+            box-shadow: 0 0 0 2px rgba(42, 107, 124, 0.04), inset 0 1px 3px rgba(30, 28, 26, 0.02);
+        }
+        .sl-textarea {
+            resize: vertical;
+            min-height: 72px;
+            font-family: var(--sl-font-mono);
+            font-size: 12px;
+        }
+        .sl-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a756e'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+        .sl-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--sl-ink-soft);
+        }
+        .sl-check input[type="checkbox"],
+        .sl-check input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--sl-accent);
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .sl-check input[type="radio"] {
+            border-radius: 50%;
+        }
+        .sl-form-card {
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            padding: 24px 28px;
+            max-width: 520px;
+            box-shadow: var(--sl-shadow-card);
+        }
+
+        /* --- dropdown --- */
+        .sl-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .sl-dropdown .sl-toggle {
+            background: var(--sl-paper-white);
+            color: var(--sl-ink-soft);
+            border: 1px solid var(--sl-border);
+            padding: 7px 16px;
+            border-radius: var(--sl-radius);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--sl-font-sans);
+            font-weight: 400;
+            box-shadow: var(--sl-shadow-card);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sl-dropdown .sl-toggle:hover {
+            background: var(--sl-paper);
+            border-color: #d0c8be;
+            color: var(--sl-ink);
+        }
+        .sl-dropdown .sl-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            min-width: 170px;
+            box-shadow: var(--sl-shadow-modal);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-3px);
+            transition: all 0.18s ease;
+            z-index: 50;
+        }
+        .sl-dropdown.sl-open .sl-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .sl-dropdown .sl-menu .sl-item {
+            display: block;
+            width: 100%;
+            padding: 7px 16px;
+            text-align: left;
+            background: none;
+            border: none;
+            color: var(--sl-ink-soft);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.12s;
+            text-decoration: none;
+            font-family: var(--sl-font-sans);
+            border-left: 2px solid transparent;
+        }
+        .sl-dropdown .sl-menu .sl-item:hover {
+            background: rgba(30, 28, 26, 0.03);
+            color: var(--sl-ink);
+            border-left-color: var(--sl-accent);
+        }
+        .sl-dropdown .sl-menu .sl-divider {
+            height: 1px;
+            background: var(--sl-border-light);
+            margin: 3px 0;
+        }
+
+        /* --- modal --- */
+        .sl-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(30, 28, 26, 0.12);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 200;
+        }
+        .sl-modal-backdrop.sl-open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .sl-modal {
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            max-width: 460px;
+            width: 92%;
+            box-shadow: var(--sl-shadow-modal);
+            transform: scale(0.98) translateY(6px);
+            transition: transform 0.3s ease;
+        }
+        .sl-modal-backdrop.sl-open .sl-modal {
+            transform: scale(1) translateY(0);
+        }
+        .sl-modal .sl-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--sl-border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            background: transparent;
+            backdrop-filter: none;
+            height: auto;
+            border-bottom: 1px solid var(--sl-border-light);
+        }
+        .sl-modal .sl-header .sl-title {
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--sl-ink);
+            font-family: var(--sl-font-sans);
+            letter-spacing: 0.02em;
+        }
+        .sl-modal .sl-header .sl-close {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--sl-ink-faded);
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--sl-font-sans);
+            border-radius: var(--sl-radius);
+        }
+        .sl-modal .sl-header .sl-close:hover {
+            color: var(--sl-ink);
+            background: rgba(30, 28, 26, 0.03);
+        }
+        .sl-modal .sl-body {
+            padding: 22px;
+        }
+        .sl-modal .sl-body p {
+            font-size: 13px;
+            color: var(--sl-ink-soft);
+            margin-bottom: 14px;
+            font-family: var(--sl-font-sans);
+            line-height: 1.6;
+            font-weight: 300;
+        }
+        .sl-modal .sl-footer {
+            padding: 14px 22px;
+            border-top: 1px solid var(--sl-border-light);
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .sl-modal.sl-sm {
+            max-width: 340px;
+        }
+        .sl-modal.sl-lg {
+            max-width: 600px;
+        }
+
+        /* --- popup --- */
+        .sl-popup {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(30, 28, 26, 0.06);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+            z-index: 180;
+        }
+        .sl-popup.sl-open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .sl-popup .sl-content {
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            padding: 28px 32px;
+            max-width: 380px;
+            width: 90%;
+            box-shadow: var(--sl-shadow-modal);
+            transform: scale(0.97) translateY(4px);
+            transition: transform 0.25s ease;
+            text-align: center;
+        }
+        .sl-popup.sl-open .sl-content {
+            transform: scale(1) translateY(0);
+        }
+        .sl-popup .sl-content h4 {
+            font-size: 16px;
+            font-weight: 400;
+            margin-bottom: 6px;
+            color: var(--sl-ink);
+            font-family: var(--sl-font-sans);
+        }
+        .sl-popup .sl-content p {
+            font-size: 13px;
+            color: var(--sl-ink-soft);
+            font-weight: 300;
+            font-family: var(--sl-font-sans);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+        .sl-popup .sl-content .sl-btn-group {
+            justify-content: center;
+        }
+
+        /* --- loaders --- */
+        .sl-spinner {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: var(--sl-ink-faded);
+            font-family: var(--sl-font-mono);
+            font-weight: 300;
+        }
+        .sl-spinner .sl-dot {
+            width: 5px;
+            height: 5px;
+            background: var(--sl-accent);
+            opacity: 0.35;
+            animation: sl-spin-pulse 1.2s ease-in-out infinite;
+            border-radius: 0;
+        }
+        .sl-spinner .sl-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        .sl-spinner .sl-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .sl-spinner .sl-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes sl-spin-pulse {
+            0%,
+            100% {
+                opacity: 0.15;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.2);
+            }
+        }
+
+        .sl-loader-bar {
+            width: 100%;
+            height: 3px;
+            background: var(--sl-border-light);
+            overflow: hidden;
+            position: relative;
+            border-radius: var(--sl-radius);
+        }
+        .sl-loader-bar .sl-track {
+            height: 100%;
+            width: 0%;
+            background: var(--sl-accent);
+            animation: sl-loader-track 1.8s ease-in-out infinite;
+            opacity: 0.6;
+        }
+        @keyframes sl-loader-track {
+            0% {
+                width: 0%;
+                transform: translateX(0);
+            }
+            50% {
+                width: 70%;
+                transform: translateX(10%);
+            }
+            100% {
+                width: 100%;
+                transform: translateX(0);
+            }
+        }
+
+        .sl-spinner-ring {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--sl-border-light);
+            border-top-color: var(--sl-accent);
+            border-radius: 50%;
+            animation: sl-ring-spin 0.8s linear infinite;
+        }
+        @keyframes sl-ring-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* --- code block --- */
+        .sl-code-block {
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            padding: 16px 20px;
+            font-family: var(--sl-font-mono);
+            font-size: 12px;
+            line-height: 1.8;
+            color: var(--sl-ink-soft);
+            overflow-x: auto;
+            box-shadow: var(--sl-shadow-card);
+            position: relative;
+        }
+        .sl-code-block .sl-ln {
+            color: var(--sl-ink-light);
+            margin-right: 16px;
+            user-select: none;
+            font-size: 11px;
+        }
+        .sl-code-block .sl-kw {
+            color: var(--sl-accent);
+        }
+        .sl-code-block .sl-str {
+            color: var(--sl-accent-warm);
+        }
+        .sl-code-block .sl-cm {
+            color: var(--sl-ink-light);
+            font-style: italic;
+        }
+        .sl-code-block .sl-fn {
+            color: var(--sl-ink);
+            font-weight: 500;
+        }
+        .sl-code-block .sl-op {
+            color: var(--sl-accent-soft);
+        }
+
+        /* --- tabs --- */
+        .sl-tabs {
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            overflow: hidden;
+            background: var(--sl-paper-white);
+            box-shadow: var(--sl-shadow-card);
+        }
+        .sl-tabs .sl-headers {
+            display: flex;
+            border-bottom: 1px solid var(--sl-border-light);
+            background: rgba(245, 240, 232, 0.3);
+            overflow-x: auto;
+        }
+        .sl-tabs .sl-headers .sl-tab {
+            padding: 10px 18px;
+            background: none;
+            border: none;
+            font-family: var(--sl-font-sans);
+            font-size: 12px;
+            color: var(--sl-ink-faded);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            font-weight: 450;
+        }
+        .sl-tabs .sl-headers .sl-tab:hover {
+            color: var(--sl-ink);
+            background: rgba(30, 28, 26, 0.02);
+        }
+        .sl-tabs .sl-headers .sl-tab.sl-active {
+            color: var(--sl-ink);
+            border-bottom-color: var(--sl-accent);
+        }
+        .sl-tabs .sl-panels .sl-panel {
+            padding: 20px 22px;
+            display: none;
+            font-size: 13px;
+            color: var(--sl-ink-soft);
+            line-height: 1.7;
+        }
+        .sl-tabs .sl-panels .sl-panel.sl-active {
+            display: block;
+        }
+
+        /* --- table --- */
+        .sl-table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            background: var(--sl-paper-white);
+            box-shadow: var(--sl-shadow-card);
+        }
+        .sl-table-wrap table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            font-family: var(--sl-font-sans);
+        }
+        .sl-table-wrap table th {
+            text-align: left;
+            padding: 10px 16px;
+            background: rgba(245, 240, 232, 0.3);
+            font-weight: 500;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--sl-ink-faded);
+            border-bottom: 1px solid var(--sl-border-light);
+            font-family: var(--sl-font-mono);
+        }
+        .sl-table-wrap table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--sl-border-light);
+            color: var(--sl-ink-soft);
+        }
+        .sl-table-wrap table tr:last-child td {
+            border-bottom: none;
+        }
+        .sl-table-wrap table tr:hover td {
+            background: rgba(245, 240, 232, 0.2);
+        }
+
+        /* =============================================================
+               STARLIGHT · RESPONSIVE
+               ============================================================= */
+
+        @media (max-width: 1024px) {
+            :root {
+                --sl-sidebar-width: 240px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sl-header .sl-nav {
+                display: none;
+            }
+
+            .sl-main {
+                padding: 20px 16px 32px;
+                max-width: 100%;
+            }
+
+            .sl-grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .sl-grid-3 {
+                grid-template-columns: 1fr;
+            }
+            .sl-grid-4 {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .sl-overlay {
+                display: block;
+            }
+            .sl-overlay.open {
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            /* On mobile, we push the body less or use overlay */
+            body.sl-sidebar-open {
+                padding-left: 0;
+            }
+
+            .sl-sidebar {
+                width: 280px;
+                max-width: 75%;
+                box-shadow: 4px 0 32px rgba(30, 28, 26, 0.12);
+            }
+
+            .sl-header .sl-menu-btn {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sl-header {
+                padding: 0 14px;
+            }
+            .sl-header .sl-logo-text {
+                font-size: 11px;
+            }
+            .sl-btn {
+                font-size: 10px;
+                padding: 5px 14px;
+            }
+            .sl-card {
+                padding: 16px 18px;
+            }
+            .sl-list .sl-item {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .sl-modal .sl-header,
+            .sl-modal .sl-body,
+            .sl-modal .sl-footer {
+                padding: 14px 16px;
+            }
+            .sl-form-card {
+                padding: 14px;
+            }
+            .sl-code-block {
+                font-size: 10px;
+                padding: 12px 14px;
+            }
+            .sl-grid-2,
+            .sl-grid-3,
+            .sl-grid-4 {
+                grid-template-columns: 1fr;
+            }
+            .sl-grid {
+                grid-template-columns: 1fr;
+            }
+            .sl-deck-door {
+                font-size: 8px;
+                padding: 0 12px;
+            }
+            .sl-deck-door .sl-left .sl-label {
+                display: none;
+            }
+        }
+
+        /* =============================================================
+               EXTRA: MANUAL / GUIDE OVERLAY (built into the page)
+               ============================================================= */
+        .sl-manual-toggle {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            z-index: 90;
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            padding: 8px 14px;
+            font-size: 10px;
+            font-family: var(--sl-font-mono);
+            color: var(--sl-ink-soft);
+            cursor: pointer;
+            box-shadow: var(--sl-shadow-card);
+            transition: all 0.2s;
+            letter-spacing: 0.04em;
+        }
+        .sl-manual-toggle:hover {
+            background: var(--sl-paper);
+            border-color: var(--sl-ink-light);
+            color: var(--sl-ink);
+        }
+
+        .sl-manual-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(30, 28, 26, 0.2);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.35s ease;
+            padding: 20px;
+        }
+        .sl-manual-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .sl-manual {
+            background: var(--sl-paper-white);
+            border: 1px solid var(--sl-border);
+            border-radius: var(--sl-radius);
+            max-width: 700px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--sl-shadow-modal);
+            padding: 32px 36px;
+            transform: scale(0.97) translateY(6px);
+            transition: transform 0.35s ease;
+        }
+        .sl-manual-overlay.open .sl-manual {
+            transform: scale(1) translateY(0);
+        }
+
+        .sl-manual::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sl-manual::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sl-manual::-webkit-scrollbar-thumb {
+            background: var(--sl-border);
+            border-radius: 0;
+        }
+
+        .sl-manual h1 {
+            font-size: 22px;
+            font-weight: 300;
+            color: var(--sl-ink);
+            font-family: var(--sl-font-sans);
+            letter-spacing: -0.01em;
+            margin-bottom: 4px;
+        }
+        .sl-manual h1 .sl-accent {
+            color: var(--sl-accent);
+            font-weight: 400;
+        }
+        .sl-manual .sl-version {
+            font-size: 10px;
+            color: var(--sl-ink-faded);
+            font-family: var(--sl-font-mono);
+            letter-spacing: 0.06em;
+            margin-bottom: 20px;
+            display: block;
+        }
+        .sl-manual h2 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--sl-ink);
+            font-family: var(--sl-font-sans);
+            margin-top: 22px;
+            margin-bottom: 6px;
+            letter-spacing: 0.02em;
+        }
+        .sl-manual h2 .sl-mono {
+            font-family: var(--sl-font-mono);
+            font-weight: 400;
+            color: var(--sl-accent);
+        }
+        .sl-manual p {
+            font-size: 13px;
+            color: var(--sl-ink-soft);
+            font-weight: 300;
+            line-height: 1.7;
+            margin-bottom: 10px;
+            font-family: var(--sl-font-sans);
+        }
+        .sl-manual ul {
+            padding-left: 22px;
+            margin-bottom: 12px;
+        }
+        .sl-manual ul li {
+            font-size: 13px;
+            color: var(--sl-ink-soft);
+            font-weight: 300;
+            line-height: 1.7;
+            font-family: var(--sl-font-sans);
+        }
+        .sl-manual ul li code,
+        .sl-manual p code {
+            font-family: var(--sl-font-mono);
+            font-size: 11px;
+            background: var(--sl-paper);
+            padding: 1px 7px;
+            border: 1px solid var(--sl-border-light);
+            border-radius: 2px;
+            color: var(--sl-ink);
+        }
+        .sl-manual .sl-close-btn {
+            margin-top: 20px;
+            border: 1px solid var(--sl-border);
+            background: none;
+            padding: 6px 20px;
+            font-size: 11px;
+            font-family: var(--sl-font-sans);
+            color: var(--sl-ink-faded);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: var(--sl-radius);
+        }
+        .sl-manual .sl-close-btn:hover {
+            background: var(--sl-paper);
+            color: var(--sl-ink);
+            border-color: var(--sl-ink-light);
+        }
+        .sl-manual .sl-divider {
+            margin: 18px 0;
+        }
+        .sl-manual .sl-badge-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 8px 0 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    STARLIGHT · TOAST CONTAINER
+    ============================================================ -->
+    <div id="sl-toast-container"></div>
+
+    <!-- ============================================================
+    STARLIGHT · OVERLAY (Mobile sidebar backdrop)
+    ============================================================ -->
+    <div class="sl-overlay" id="sl-overlay"></div>
+
+    <!-- ============================================================
+    STARLIGHT · HEADER
+    ============================================================ -->
+    <header class="sl-header">
+        <button class="sl-menu-btn" id="sl-menu-btn" aria-label="Toggle sidebar">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+        <a href="#intro" class="sl-logo">
+            <span class="sl-logo-icon">✦</span>
+            <span class="sl-logo-text">Starlight <span>v2.3</span></span>
+        </a>
+        <nav class="sl-nav">
+            <a href="#intro">Intro</a>
+            <a href="#components">Components</a>
+            <a href="#usage">Usage</a>
+        </nav>
+        <div class="sl-status">
+            <span class="sl-dot"></span>
+            ready
+        </div>
+    </header>
+
+    <!-- ============================================================
+    STARLIGHT · SIDEBAR (FIXED + SLIDES)
+    ============================================================ -->
+    <aside class="sl-sidebar" id="sl-sidebar">
+        <div class="sl-section">
+            <div class="sl-title">Guide</div>
+            <ul class="sl-menu">
+                <li><a href="#intro" class="sl-active">· Getting Started</a></li>
+                <li><a href="#components">· All Components</a></li>
+                <li><a href="#usage">· Usage</a></li>
+            </ul>
+        </div>
+        <div class="sl-divider"></div>
+        <div class="sl-section">
+            <div class="sl-title">Components</div>
+            <ul class="sl-menu">
+                <li><a href="#btn-section">· Buttons</a></li>
+                <li><a href="#input-section">· Inputs</a></li>
+                <li><a href="#card-section">· Cards</a></li>
+                <li><a href="#list-section">· Lists</a></li>
+                <li><a href="#badge-section">· Badges</a></li>
+                <li><a href="#dropdown-section">· Dropdowns</a></li>
+                <li><a href="#modal-section">· Modals</a></li>
+                <li><a href="#popup-section">· Popups</a></li>
+                <li><a href="#loader-section">· Loaders</a></li>
+                <li><a href="#tab-section">· Tabs</a></li>
+                <li><a href="#table-section">· Tables</a></li>
+                <li><a href="#code-section">· Code</a></li>
+                <li><a href="#toast-section">· Toast</a></li>
+            </ul>
+        </div>
+        <div class="sl-divider"></div>
+        <div class="sl-section">
+            <div class="sl-title">Status</div>
+            <ul class="sl-menu">
+                <li><a href="#" style="color:var(--sl-accent);">● system online</a></li>
+                <li><a href="#" style="color:var(--sl-ink-faded);font-size:10px;">scrollspy active</a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- ============================================================
+    STARLIGHT · MAIN
+    ============================================================ -->
+    <main class="sl-main">
+
+        <!-- ===== INTRO ===== -->
+        <section class="sl-section-block" id="intro">
+            <div class="sl-header-wrap">
+                <div class="sl-label">Starlight v2.3</div>
+                <h1 class="sl-heading">Hackable <span class="sl-accent">GUI Library</span></h1>
+            </div>
+            <div style="max-width:680px;margin-bottom:24px;">
+                <p style="font-size:15px;color:var(--sl-ink-soft);font-weight:300;line-height:1.8;">
+                    A lightweight, <strong>hackable</strong> GUI library.
+                    <strong>14+ components</strong> zero dependencies.
+                </p>
+                <div class="sl-flex sl-flex-wrap sl-gap-2 sl-mt-2">
+                    <span class="sl-badge sl-active"><span class="sl-dot"></span>HTML</span>
+                    <span class="sl-badge sl-complete"><span class="sl-dot"></span>CSS</span>
+                    <span class="sl-badge sl-scheduled"><span class="sl-dot"></span>zero deps</span>
+                    <span class="sl-badge sl-warning"><span class="sl-dot"></span>~15KB gzip</span>
+                </div>
+            </div>
+
+            <div class="sl-grid sl-grid-4 sl-mt-2">
+                <div class="sl-card">
+                    <div class="sl-card-label">buttons</div>
+                    <div class="sl-btn-group">
+                        <button class="sl-btn sl-primary sl-sm">Go</button>
+                        <button class="sl-btn sl-secondary sl-sm">Edit</button>
+                    </div>
+                </div>
+                <div class="sl-card">
+                    <div class="sl-card-label">badges</div>
+                    <div class="sl-flex sl-flex-wrap sl-gap-1">
+                        <span class="sl-badge sl-active"><span class="sl-dot"></span>Live</span>
+                        <span class="sl-badge sl-warning"><span class="sl-dot"></span>Warn</span>
+                    </div>
+                </div>
+                <div class="sl-card">
+                    <div class="sl-card-label">loader</div>
+                    <div class="sl-spinner">
+                        <span class="sl-dot"></span>
+                        <span class="sl-dot"></span>
+                        <span class="sl-dot"></span>
+                    </div>
+                </div>
+                <div class="sl-card">
+                    <div class="sl-card-label">toast</div>
+                    <button class="sl-btn sl-secondary sl-sm" onclick="slToast('✦','Hello from Starlight!')">Trigger</button>
+                </div>
+            </div>
+
+            <!-- MANUAL BUTTON -->
+            <div style="margin-top:24px;">
+                <button class="sl-btn sl-secondary" onclick="document.getElementById('manualOverlay').classList.add('open')">
+                    📖 Read the full manual
+                </button>
+                <span class="sl-note" style="margin-left:12px;">— complete guide with API, theming, and examples</span>
+            </div>
+        </section>
+
+        <!-- ===== COMPONENTS ===== -->
+        <section class="sl-section-block" id="components">
+            <div class="sl-header-wrap">
+                <div class="sl-label">Components</div>
+                <h2 class="sl-heading">All <span class="sl-accent">Examples</span></h2>
+            </div>
+
+            <!-- BUTTONS -->
+            <section id="btn-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Buttons</h3>
+                <div class="sl-demo">
+                    <div class="sl-row">
+                        <button class="sl-btn sl-primary">Primary</button>
+                        <button class="sl-btn sl-secondary">Secondary</button>
+                        <button class="sl-btn sl-ghost">Ghost</button>
+                        <button class="sl-btn sl-danger">Danger</button>
+                        <button class="sl-btn sl-success">Success</button>
+                        <button class="sl-btn sl-primary sl-sm">Small</button>
+                        <button class="sl-btn sl-secondary sl-lg">Large</button>
+                        <button class="sl-btn sl-primary" disabled>Disabled</button>
+                    </div>
+                    <div class="sl-code"><span class="sl-tag">&lt;button</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-btn sl-primary"</span><span class="sl-tag">&gt;</span>Primary<span class="sl-tag">&lt;/button&gt;</span></div>
+                    <div class="sl-note">Variants: <code>sl-primary</code>, <code>sl-secondary</code>, <code>sl-ghost</code>, <code>sl-danger</code>, <code>sl-success</code>, <code>sl-sm</code>, <code>sl-lg</code>, <code>:disabled</code></div>
+                </div>
+            </section>
+
+            <!-- INPUTS - CYBERDECK PER-FIELD DOORS -->
+            <section id="input-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Cyberdeck Doors</h3>
+                <div class="sl-demo">
+                    <div class="sl-grid sl-grid-2 sl-gap-3" style="max-width:700px;">
+                        <!-- Mission Name -->
+                        <div class="sl-deck-field sl-col-span-1">
+                            <label class="sl-label">mission name</label>
+                            <div class="sl-deck-slot">
+                                <input type="text" class="sl-input" placeholder="Deep Space Survey" />
+                                <div class="sl-deck-door" onclick="this.parentElement.querySelector('input, select, textarea').focus()">
+                                    <span class="sl-left">
+                                        <span class="sl-dot"></span>
+                                        <span class="sl-label">sys.ready</span>
+                                    </span>
+                                    <span class="sl-grip">
+                                        <span class="sl-line"></span>
+                                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Target Coordinates -->
+                        <div class="sl-deck-field sl-col-span-1">
+                            <label class="sl-label">target coordinates</label>
+                            <div class="sl-deck-slot">
+                                <input type="text" class="sl-input" placeholder="48.2°N, 121.4°W" />
+                                <div class="sl-deck-door" onclick="this.parentElement.querySelector('input, select, textarea').focus()">
+                                    <span class="sl-left">
+                                        <span class="sl-dot"></span>
+                                        <span class="sl-label">sys.ready</span>
+                                    </span>
+                                    <span class="sl-grip">
+                                        <span class="sl-line"></span>
+                                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Priority (Select) -->
+                        <div class="sl-deck-field sl-col-span-1">
+                            <label class="sl-label">priority</label>
+                            <div class="sl-deck-slot">
+                                <select class="sl-select">
+                                    <option>High</option>
+                                    <option selected>Medium</option>
+                                    <option>Low</option>
+                                </select>
+                                <div class="sl-deck-door" onclick="this.parentElement.querySelector('input, select, textarea').focus()">
+                                    <span class="sl-left">
+                                        <span class="sl-dot"></span>
+                                        <span class="sl-label">sys.ready</span>
+                                    </span>
+                                    <span class="sl-grip">
+                                        <span class="sl-line"></span>
+                                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description (Textarea) - spans 2 columns -->
+                        <div class="sl-deck-field sl-col-span-2">
+                            <label class="sl-label">description</label>
+                            <div class="sl-deck-slot">
+                                <textarea class="sl-textarea" placeholder="Mission objectives…" rows="2"></textarea>
+                                <div class="sl-deck-door" onclick="this.parentElement.querySelector('input, select, textarea').focus()">
+                                    <span class="sl-left">
+                                        <span class="sl-dot"></span>
+                                        <span class="sl-label">sys.ready</span>
+                                    </span>
+                                    <span class="sl-grip">
+                                        <span class="sl-line"></span>
+                                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Checkboxes & Buttons -->
+                    <div class="sl-mt-2 sl-flex sl-flex-wrap sl-gap-3 sl-items-center">
+                        <div class="sl-flex sl-flex-wrap sl-gap-2">
+                            <label class="sl-check"><input type="checkbox" checked /> <span>Enable telemetry</span></label>
+                            <label class="sl-check"><input type="radio" name="opt" checked /> <span>Standard</span></label>
+                            <label class="sl-check"><input type="radio" name="opt" /> <span>Deep scan</span></label>
+                        </div>
+                        <div class="sl-btn-group">
+                            <button class="sl-btn sl-primary">Submit</button>
+                            <button class="sl-btn sl-ghost">Cancel</button>
+                        </div>
+                    </div>
+
+                    <div class="sl-code sl-mt-2"><span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-deck-field"</span><span class="sl-tag">&gt;</span> <span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-deck-slot"</span><span class="sl-tag">&gt;</span> <span class="sl-tag">&lt;input</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-input"</span> <span class="sl-tag">/&gt;</span> <span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-deck-door"</span><span class="sl-tag">&gt;</span>…<span class="sl-tag">&lt;/div&gt;</span> <span class="sl-tag">&lt;/div&gt;</span> <span class="sl-tag">&lt;/div&gt;</span></div>
+                    <div class="sl-note">Hover or focus on any field to slide its individual door open. Click the door to focus the input.</div>
+                </div>
+            </section>
+
+            <!-- CARDS -->
+            <section id="card-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Cards</h3>
+                <div class="sl-demo">
+                    <div class="sl-grid sl-grid-3">
+                        <div class="sl-card">
+                            <div class="sl-card-label">status</div>
+                            <div class="sl-flex sl-gap-1"><div style="width:6px;height:6px;background:var(--sl-accent);opacity:0.7;"></div><span>Online</span></div>
+                            <p class="sl-card-meta sl-mt-1">All systems nominal</p>
+                        </div>
+                        <div class="sl-card">
+                            <div class="sl-card-label">transfer</div>
+                            <div class="sl-card-value">12.4 <span class="sl-unit">GB</span></div>
+                            <div class="sl-meter"><div class="sl-fill sl-animated" style="--sl-target:75%;"></div></div>
+                            <p class="sl-card-meta">75% complete</p>
+                        </div>
+                        <div class="sl-card">
+                            <div class="sl-card-label">signal</div>
+                            <div class="sl-card-value">4.2 <span class="sl-unit">dB</span></div>
+                            <p class="sl-card-meta">Excellent stability</p>
+                        </div>
+                    </div>
+                    <div class="sl-code"><span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-card"</span><span class="sl-tag">&gt;</span> … <span class="sl-tag">&lt;/div&gt;</span></div>
+                    <div class="sl-note">Use <code>sl-card</code>, <code>sl-card-label</code>, <code>sl-card-value</code>, <code>sl-card-meta</code>, <code>sl-meter</code>, <code>sl-fill</code></div>
+                </div>
+            </section>
+
+            <!-- LISTS -->
+            <section id="list-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Lists</h3>
+                <div class="sl-demo">
+                    <div class="sl-list" style="max-width:480px;">
+                        <div class="sl-item">
+                            <div><div class="sl-item-label">module</div><div class="sl-item-title">Telemetry</div></div>
+                            <span class="sl-badge sl-active"><span class="sl-dot"></span>Active</span>
+                        </div>
+                        <div class="sl-item">
+                            <div><div class="sl-item-label">module</div><div class="sl-item-title">Navigation</div></div>
+                            <span class="sl-badge sl-scheduled"><span class="sl-dot"></span>Pending</span>
+                        </div>
+                        <div class="sl-item">
+                            <div><div class="sl-item-label">module</div><div class="sl-item-title">Archive</div></div>
+                            <span class="sl-badge sl-complete"><span class="sl-dot"></span>Done</span>
+                        </div>
+                    </div>
+                    <div class="sl-code"><span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-list"</span><span class="sl-tag">&gt;</span> <span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-item"</span><span class="sl-tag">&gt;</span> … <span class="sl-tag">&lt;/div&gt;</span> <span class="sl-tag">&lt;/div&gt;</span></div>
+                </div>
+            </section>
+
+            <!-- BADGES -->
+            <section id="badge-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Badges</h3>
+                <div class="sl-demo">
+                    <div class="sl-row">
+                        <span class="sl-badge sl-active"><span class="sl-dot"></span>Active</span>
+                        <span class="sl-badge sl-scheduled"><span class="sl-dot"></span>Scheduled</span>
+                        <span class="sl-badge sl-complete"><span class="sl-dot"></span>Complete</span>
+                        <span class="sl-badge sl-warning"><span class="sl-dot"></span>Warning</span>
+                        <span class="sl-badge" style="border-color:var(--sl-accent-soft);color:var(--sl-accent-soft);">Custom</span>
+                    </div>
+                    <div class="sl-code"><span class="sl-tag">&lt;span</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-badge sl-active"</span><span class="sl-tag">&gt;</span>…<span class="sl-tag">&lt;/span&gt;</span></div>
+                    <div class="sl-note">Variants: <code>sl-active</code>, <code>sl-scheduled</code>, <code>sl-complete</code>, <code>sl-warning</code></div>
+                </div>
+            </section>
+
+            <!-- DROPDOWNS -->
+            <section id="dropdown-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Dropdowns</h3>
+                <div class="sl-demo">
+                    <div class="sl-row">
+                        <div class="sl-dropdown" id="dd1">
+                            <button class="sl-toggle">Menu ▾</button>
+                            <div class="sl-menu">
+                                <a href="#" class="sl-item">System Config</a>
+                                <a href="#" class="sl-item">Calibration</a>
+                                <div class="sl-divider"></div>
+                                <a href="#" class="sl-item">Help</a>
+                            </div>
+                        </div>
+                        <div class="sl-dropdown" id="dd2">
+                            <button class="sl-toggle">Actions ▾</button>
+                            <div class="sl-menu">
+                                <a href="#" class="sl-item">Launch scan</a>
+                                <a href="#" class="sl-item">Export data</a>
+                                <a href="#" class="sl-item">Reset</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sl-code"><span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-dropdown"</span><span class="sl-tag">&gt;</span> <span class="sl-tag">&lt;button</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-toggle"</span><span class="sl-tag">&gt;</span>…<span class="sl-tag">&lt;/button&gt;</span> <span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-menu"</span><span class="sl-tag">&gt;</span>…<span class="sl-tag">&lt;/div&gt;</span> <span class="sl-tag">&lt;/div&gt;</span></div>
+                    <div class="sl-note">JS: add/remove <code>sl-open</code> on <code>sl-dropdown</code> toggle.</div>
+                </div>
+            </section>
+
+            <!-- MODALS -->
+            <section id="modal-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Modals</h3>
+                <div class="sl-demo">
+                    <div class="sl-row">
+                        <button class="sl-btn sl-primary" onclick="slOpenModal('demoModal')">Open Modal</button>
+                        <button class="sl-btn sl-secondary" onclick="slOpenModal('modalSm')">Small</button>
+                        <button class="sl-btn sl-secondary" onclick="slOpenModal('modalLg')">Large</button>
+                    </div>
+                    <div class="sl-code"><span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-modal-backdrop"</span> <span class="sl-attr">id</span>=<span class="sl-val">"myModal"</span><span class="sl-tag">&gt;</span> <span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-modal"</span><span class="sl-tag">&gt;</span>…<span class="sl-tag">&lt;/div&gt;</span> <span class="sl-tag">&lt;/div&gt;</span></div>
+                    <div class="sl-note">JS: <code>slOpenModal('id')</code> · <code>slCloseModal('id')</code>. Classes: <code>sl-sm</code>, <code>sl-lg</code>.</div>
+                </div>
+            </section>
+
+            <!-- POPUPS -->
+            <section id="popup-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Popups</h3>
+                <div class="sl-demo">
+                    <div class="sl-row">
+                        <button class="sl-btn sl-secondary" onclick="slOpenPopup('confirmPopup')">Confirm</button>
+                        <button class="sl-btn sl-secondary" onclick="slOpenPopup('infoPopup')">Info</button>
+                        <button class="sl-btn sl-danger" onclick="slOpenPopup('dangerPopup')">Danger</button>
+                    </div>
+                    <div class="sl-code"><span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-popup"</span> <span class="sl-attr">id</span>=<span class="sl-val">"myPopup"</span><span class="sl-tag">&gt;</span> <span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-content"</span><span class="sl-tag">&gt;</span>…<span class="sl-tag">&lt;/div&gt;</span> <span class="sl-tag">&lt;/div&gt;</span></div>
+                    <div class="sl-note">JS: <code>slOpenPopup('id')</code> · <code>slClosePopup('id')</code></div>
+                </div>
+            </section>
+
+            <!-- LOADERS -->
+            <section id="loader-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Loaders &amp; Spinners</h3>
+                <div class="sl-demo">
+                    <div class="sl-row">
+                        <div class="sl-spinner">
+                            <span class="sl-dot"></span>
+                            <span class="sl-dot"></span>
+                            <span class="sl-dot"></span>
+                            <span style="margin-left:4px;font-size:10px;">loading</span>
+                        </div>
+                        <div class="sl-spinner-ring"></div>
+                        <div style="width:180px;">
+                            <div class="sl-loader-bar"><div class="sl-track"></div></div>
+                            <div class="sl-note" style="margin-top:4px;">progress bar</div>
+                        </div>
+                        <div style="width:140px;">
+                            <div class="sl-meter"><div class="sl-fill sl-animated" style="--sl-target:64%;"></div></div>
+                            <div class="sl-note" style="margin-top:2px;">64%</div>
+                        </div>
+                    </div>
+                    <div class="sl-code"><span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-spinner"</span><span class="sl-tag">&gt;</span> <span class="sl-tag">&lt;span</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-dot"</span><span class="sl-tag">&gt;&lt;/span&gt;</span> … <span class="sl-tag">&lt;/div&gt;</span></div>
+                    <div class="sl-note">Classes: <code>sl-spinner</code> + <code>sl-dot</code> · <code>sl-spinner-ring</code> · <code>sl-loader-bar</code> + <code>sl-track</code></div>
+                </div>
+            </section>
+
+            <!-- TABS -->
+            <section id="tab-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Tabs</h3>
+                <div class="sl-demo">
+                    <div class="sl-tabs" style="max-width:560px;">
+                        <div class="sl-headers">
+                            <button class="sl-tab sl-active" data-tab="tabA">Overview</button>
+                            <button class="sl-tab" data-tab="tabB">Telemetry</button>
+                            <button class="sl-tab" data-tab="tabC">Archive</button>
+                        </div>
+                        <div class="sl-panels">
+                            <div class="sl-panel sl-active" id="tabA"><p><strong>Overview</strong> — All systems nominal. Signal clarity at 4.2 dB.</p></div>
+                            <div class="sl-panel" id="tabB"><p><strong>Telemetry</strong> — 12.4 GB transmitted. 2 instruments in calibration.</p></div>
+                            <div class="sl-panel" id="tabC"><p><strong>Archive</strong> — Deep space survey complete. 47k images captured.</p></div>
+                        </div>
+                    </div>
+                    <div class="sl-code"><span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-tabs"</span><span class="sl-tag">&gt;</span> <span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-headers"</span><span class="sl-tag">&gt;</span> <span class="sl-tag">&lt;button</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-tab sl-active"</span> <span class="sl-attr">data-tab</span>=<span class="sl-val">"tab1"</span><span class="sl-tag">&gt;</span>…<span class="sl-tag">&lt;/button&gt;</span> … <span class="sl-tag">&lt;/div&gt;</span> <span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-panels"</span><span class="sl-tag">&gt;</span> <span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-panel sl-active"</span> <span class="sl-attr">id</span>=<span class="sl-val">"tab1"</span><span class="sl-tag">&gt;</span>…<span class="sl-tag">&lt;/div&gt;</span> <span class="sl-tag">&lt;/div&gt;</span> <span class="sl-tag">&lt;/div&gt;</span></div>
+                    <div class="sl-note">JS automatically handles tab switching via <code>data-tab</code> + <code>id</code>.</div>
+                </div>
+            </section>
+
+            <!-- TABLES -->
+            <section id="table-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Tables</h3>
+                <div class="sl-demo">
+                    <div class="sl-table-wrap" style="max-width:560px;">
+                        <table>
+                            <thead><tr><th>Module</th><th>Status</th><th>Data</th></tr></thead>
+                            <tbody>
+                                <tr><td>Telemetry</td><td><span class="sl-badge sl-active" style="font-size:7px;padding:1px 8px;"><span class="sl-dot"></span>Active</span></td><td>12.4 GB</td></tr>
+                                <tr><td>Navigation</td><td><span class="sl-badge sl-scheduled" style="font-size:7px;padding:1px 8px;"><span class="sl-dot"></span>Pending</span></td><td>—</td></tr>
+                                <tr><td>Archive</td><td><span class="sl-badge sl-complete" style="font-size:7px;padding:1px 8px;"><span class="sl-dot"></span>Done</span></td><td>47k</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="sl-code"><span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-table-wrap"</span><span class="sl-tag">&gt;</span> <span class="sl-tag">&lt;table&gt;</span> … <span class="sl-tag">&lt;/table&gt;</span> <span class="sl-tag">&lt;/div&gt;</span></div>
+                </div>
+            </section>
+
+            <!-- CODE -->
+            <section id="code-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Code Block</h3>
+                <div class="sl-demo">
+                    <div class="sl-code-block">
+                        <div><span class="sl-ln">1</span> <span class="sl-kw">function</span> <span class="sl-fn">scanDeepSpace</span>() {</div>
+                        <div><span class="sl-ln">2</span>   <span class="sl-kw">const</span> data = <span class="sl-kw">await</span> <span class="sl-fn">fetchTelemetry</span>();</div>
+                        <div><span class="sl-ln">3</span>   <span class="sl-kw">if</span> (data.signal <span class="sl-op">&gt;</span> <span class="sl-str">4.2</span>) {</div>
+                        <div><span class="sl-ln">4</span>     <span class="sl-fn">transmitArchive</span>(data);</div>
+                        <div><span class="sl-ln">5</span>   } <span class="sl-kw">else</span> {</div>
+                        <div><span class="sl-ln">6</span>     <span class="sl-fn">recalibrate</span>(<span class="sl-str">'navigation'</span>);</div>
+                        <div><span class="sl-ln">7</span>   }</div>
+                        <div><span class="sl-ln">8</span> }</div>
+                        <div><span class="sl-ln">9</span> <span class="sl-cm">// system ready</span></div>
+                    </div>
+                    <div class="sl-code"><span class="sl-tag">&lt;div</span> <span class="sl-attr">class</span>=<span class="sl-val">"sl-code-block"</span><span class="sl-tag">&gt;</span> … <span class="sl-tag">&lt;/div&gt;</span></div>
+                </div>
+            </section>
+
+            <!-- TOAST -->
+            <section id="toast-section" style="margin-bottom:44px;">
+                <h3 class="sl-label" style="margin-bottom:6px;">Toast Notifications</h3>
+                <div class="sl-demo">
+                    <div class="sl-row">
+                        <button class="sl-btn sl-secondary" onclick="slToast('✦','Hello from Starlight!')">Default</button>
+                        <button class="sl-btn sl-success" onclick="slToast('✅','Mission complete.')">Success</button>
+                        <button class="sl-btn sl-danger" onclick="slToast('⚠️','Warning: signal low.')">Warning</button>
+                        <button class="sl-btn sl-primary" onclick="slToast('📡','Telemetry active.')">Info</button>
+                    </div>
+                    <div class="sl-code"><span class="sl-fn">slToast</span>(<span class="sl-str">'icon'</span>, <span class="sl-str">'message'</span>, <span class="sl-val">duration</span>)</div>
+                    <div class="sl-note">Toasts auto‑dismiss after 3.2s. Click ✕ to dismiss early.</div>
+                </div>
+            </section>
+
+            <div class="sl-divider-ornament" style="max-width:200px;margin:8px auto;">
+                <span>✦</span>
+            </div>
+        </section>
+
+        <!-- ===== USAGE ===== -->
+        <section class="sl-section-block" id="usage">
+            <div class="sl-header-wrap">
+                <div class="sl-label">Usage</div>
+                <h2 class="sl-heading">How to <span class="sl-accent">Use</span></h2>
+            </div>
+
+            <div style="max-width:720px;">
+                <div class="sl-card" style="margin-bottom:16px;">
+                    <div class="sl-card-label">1. Fixed Sidebar</div>
+                    <p class="sl-card-meta">The sidebar stays fixed in place as you scroll. Click the ☰ button in the top‑left to slide it in or out. The main content pushes to make room.</p>
+                </div>
+                <div class="sl-card" style="margin-bottom:16px;">
+                    <div class="sl-card-label">2. Scroll to navigate</div>
+                    <p class="sl-card-meta">As you scroll down the page, the sidebar automatically highlights the section you're currently viewing. Click any sidebar link to jump directly to that section.</p>
+                </div>
+                <div class="sl-card" style="margin-bottom:16px;">
+                    <div class="sl-card-label">3. Cyberdeck Doors</div>
+                    <p class="sl-card-meta">Each input field has its own sliding door. Hover or focus on a field to slide its door open. Click the door to focus the input.</p>
+                </div>
+                <div class="sl-card">
+                    <div class="sl-card-label">4. Customize</div>
+                    <p class="sl-card-meta">Override CSS variables in <code>:root</code> — <code>--sl-accent</code>, <code>--sl-paper</code>, <code>--sl-ink</code>, <code>--sl-border</code>, etc. The entire palette is adjustable.</p>
+                </div>
+            </div>
+
+            <div class="sl-divider-ornament" style="max-width:160px;margin:24px auto 0;">
+                <span>✦</span>
+            </div>
+        </section>
+
+        <!-- footer -->
+        <div style="padding-top:28px;border-top:1px solid var(--sl-border);text-align:center;margin-top:12px;">
+            <p style="font-size:10px;color:var(--sl-ink-faded);letter-spacing:0.06em;font-weight:300;">
+                Starlight · v2.3
+            </p>
+        </div>
+    </main>
+
+    <!-- ============================================================
+    STARLIGHT · MODALS
+    ============================================================ -->
+    <div class="sl-modal-backdrop" id="demoModal">
+        <div class="sl-modal">
+            <div class="sl-header">
+                <span class="sl-title">Launch Deep Scan</span>
+                <button class="sl-close" onclick="slCloseModal('demoModal')">✕</button>
+            </div>
+            <div class="sl-body">
+                <p>Initialize comprehensive deep space survey. This will activate all telemetry systems.</p>
+                <div class="sl-form-group">
+                    <label class="sl-label">scan duration</label>
+                    <input type="text" class="sl-input" placeholder="72 hours" />
+                </div>
+            </div>
+            <div class="sl-footer">
+                <button class="sl-btn sl-ghost" onclick="slCloseModal('demoModal')">Cancel</button>
+                <button class="sl-btn sl-primary" onclick="slCloseModal('demoModal');slToast('✅','Scan initiated.')">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sl-modal-backdrop" id="modalSm">
+        <div class="sl-modal sl-sm">
+            <div class="sl-header">
+                <span class="sl-title">Quick action</span>
+                <button class="sl-close" onclick="slCloseModal('modalSm')">✕</button>
+            </div>
+            <div class="sl-body">
+                <p>Are you sure you want to proceed?</p>
+            </div>
+            <div class="sl-footer">
+                <button class="sl-btn sl-ghost" onclick="slCloseModal('modalSm')">Cancel</button>
+                <button class="sl-btn sl-primary" onclick="slCloseModal('modalSm');slToast('✓','Done.')">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sl-modal-backdrop" id="modalLg">
+        <div class="sl-modal sl-lg">
+            <div class="sl-header">
+                <span class="sl-title">Detailed Report</span>
+                <button class="sl-close" onclick="slCloseModal('modalLg')">✕</button>
+            </div>
+            <div class="sl-body">
+                <p><strong>Mission:</strong> Deep Space Survey · <strong>Status:</strong> Complete</p>
+                <p>Total data transmitted: 12.4 GB · Signal clarity: 4.2 dB · Power reserve: 156h</p>
+                <div class="sl-divider"></div>
+                <p>All systems nominal. No anomalies detected.</p>
+            </div>
+            <div class="sl-footer">
+                <button class="sl-btn sl-ghost" onclick="slCloseModal('modalLg')">Close</button>
+                <button class="sl-btn sl-primary" onclick="slCloseModal('modalLg');slToast('📄','Report exported.')">Export</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    STARLIGHT · POPUPS
+    ============================================================ -->
+    <div class="sl-popup" id="confirmPopup">
+        <div class="sl-content">
+            <h4>⚠️ Confirm action</h4>
+            <p>This will recalibrate the navigation array. Are you sure?</p>
+            <div class="sl-btn-group">
+                <button class="sl-btn sl-primary" onclick="slClosePopup('confirmPopup');slToast('🔄','Recalibration started.')">Confirm</button>
+                <button class="sl-btn sl-ghost" onclick="slClosePopup('confirmPopup')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sl-popup" id="infoPopup">
+        <div class="sl-content">
+            <h4>ℹ️ System info</h4>
+            <p>All telemetry modules are operational. Signal clarity is excellent.</p>
+            <div class="sl-btn-group">
+                <button class="sl-btn sl-secondary" onclick="slClosePopup('infoPopup')">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sl-popup" id="dangerPopup">
+        <div class="sl-content">
+            <h4>⚠️ Destructive action</h4>
+            <p>This will permanently delete all archived data. This cannot be undone.</p>
+            <div class="sl-btn-group">
+                <button class="sl-btn sl-danger" onclick="slClosePopup('dangerPopup');slToast('🗑️','Data deleted.')">Delete</button>
+                <button class="sl-btn sl-ghost" onclick="slClosePopup('dangerPopup')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    STARLIGHT · MANUAL OVERLAY (full documentation built in)
+    ============================================================ -->
+    <div class="sl-manual-overlay" id="manualOverlay">
+        <div class="sl-manual">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+                <div>
+                    <h1>Starlight <span class="sl-accent">v2.3</span></h1>
+                    <span class="sl-version">✦ paper‑hacker GUI library · zero dependencies</span>
+                </div>
+                <button class="sl-close" style="background:none;border:none;font-size:22px;color:var(--sl-ink-faded);cursor:pointer;padding:0 4px;" onclick="document.getElementById('manualOverlay').classList.remove('open')">✕</button>
+            </div>
+
+            <div class="sl-divider"></div>
+
+            <h2>📦 Installation</h2>
+            <p><strong>NPM</strong> (recommended)</p>
+            <div class="sl-code" style="background:var(--sl-paper);padding:8px 14px;font-family:var(--sl-font-mono);font-size:12px;border:1px solid var(--sl-border-light);border-radius:var(--sl-radius);margin-bottom:10px;">
+                npm install starlight-gui
+            </div>
+            <p><strong>CDN</strong> (quick start)</p>
+            <div class="sl-code" style="background:var(--sl-paper);padding:8px 14px;font-family:var(--sl-font-mono);font-size:12px;border:1px solid var(--sl-border-light);border-radius:var(--sl-radius);margin-bottom:10px;">
+                &lt;link rel="stylesheet" href="https://unpkg.com/starlight-gui/dist/starlight.min.css" /&gt;<br />
+                &lt;script src="https://unpkg.com/starlight-gui/dist/starlight.min.js"&gt;&lt;/script&gt;
+            </div>
+
+            <h2>🎨 Theming</h2>
+            <p>Override these CSS variables in your <code>:root</code> or a parent selector:</p>
+            <div class="sl-code" style="background:var(--sl-paper);padding:8px 14px;font-family:var(--sl-font-mono);font-size:11px;border:1px solid var(--sl-border-light);border-radius:var(--sl-radius);margin-bottom:10px;">
+                --sl-paper: #f5f0e8;        /* main background */<br />
+                --sl-paper-white: #faf7f2;  /* card / modal bg */<br />
+                --sl-ink: #1e1c1a;          /* primary text */<br />
+                --sl-ink-soft: #3d3a36;     /* secondary text */<br />
+                --sl-ink-faded: #7a756e;    /* muted text */<br />
+                --sl-accent: #2a6b7c;       /* primary accent */<br />
+                --sl-accent-soft: #5a9aa8;  /* hover / focus */<br />
+                --sl-border: #ddd6cc;       /* borders */<br />
+                --sl-radius: 0px;           /* corner radius */<br />
+                --sl-font-sans: 'Inter', ...;<br />
+                --sl-font-mono: 'JetBrains Mono', ...;
+            </div>
+
+            <h2>🧩 Components</h2>
+            <p>Starlight ships with <strong>14+ components</strong> out of the box. Every component is <strong>hackable</strong> — just add your own classes or override variables.</p>
+            <div class="sl-badge-grid">
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Buttons</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Cards</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Lists</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Badges</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Dropdowns</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Modals</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Popups</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Loaders</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Tabs</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Tables</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Code blocks</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Toasts</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Forms</span>
+                <span class="sl-badge sl-active"><span class="sl-dot"></span>Cyberdeck Doors</span>
+            </div>
+
+            <h2>📐 Layout &amp; Utilities</h2>
+            <p>Starlight includes a full suite of utility classes for layout, spacing, borders, text, and more — all prefixed with <code>sl-</code>. See the demo page for examples.</p>
+
+            <h2>⚡ JavaScript API</h2>
+            <p><strong>Toast</strong> — <code>slToast(icon, message, duration)</code></p>
+            <p><strong>Modal</strong> — <code>slOpenModal(id)</code> · <code>slCloseModal(id)</code></p>
+            <p><strong>Popup</strong> — <code>slOpenPopup(id)</code> · <code>slClosePopup(id)</code></p>
+            <p><strong>Sidebar</strong> — Toggle with <code>.sl-sidebar.open</code> + <code>body.sl-sidebar-open</code></p>
+            <p><strong>Tabs</strong> — Auto‑bind via <code>data-tab</code> + <code>id</code></p>
+            <p><strong>Scrollspy</strong> — Auto‑highlights sidebar links based on scroll position.</p>
+
+            <h2>📱 Responsive</h2>
+            <p>Starlight adapts to any viewport. On mobile (<768px), the sidebar becomes a slide‑in overlay with a backdrop. All components reflow gracefully.</p>
+
+            <h2>🔧 Hackability</h2>
+            <p>Everything is built with plain CSS and vanilla JS. No build tools, no frameworks, no dependencies. You can copy, paste, and modify any part of the library. The source is ~15KB gzipped.</p>
+
+            <div class="sl-divider"></div>
+
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button class="sl-btn sl-primary" onclick="document.getElementById('manualOverlay').classList.remove('open')">Close manual</button>
+                <button class="sl-btn sl-secondary" onclick="document.getElementById('manualOverlay').classList.remove('open');slToast('✦','Starlight v2.3 — ready.')">Dismiss &amp; toast</button>
+                <a href="#" class="sl-btn sl-ghost" style="text-decoration:none;" onclick="document.getElementById('manualOverlay').classList.remove('open')">↳ back to demo</a>
+            </div>
+
+            <div style="margin-top:16px;font-size:10px;color:var(--sl-ink-faded);font-family:var(--sl-font-mono);letter-spacing:0.04em;">
+                Starlight · v2.3 · built with ✦ for hackers
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    STARLIGHT · SCRIPT
+    ============================================================ -->
+    <script>
+        // =============================================================
+        // STARLIGHT · v2.3 · Core JavaScript
+        // Zero dependencies · Fully hackable
+        // =============================================================
+
+        // --------------------------------------------------------------
+        // 1. SIDEBAR TOGGLE (Fixed Sidebar)
+        // --------------------------------------------------------------
+        (function() {
+            const sidebar = document.getElementById('sl-sidebar');
+            const overlay = document.getElementById('sl-overlay');
+            const menuBtn = document.getElementById('sl-menu-btn');
+            const body = document.body;
+
+            function openSidebar() {
+                sidebar.classList.add('open');
+                overlay.classList.add('open');
+                body.classList.add('sl-sidebar-open');
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open');
+                body.classList.remove('sl-sidebar-open');
+            }
+
+            function toggleSidebar() {
+                if (sidebar.classList.contains('open')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            }
+
+            if (menuBtn) {
+                menuBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    closeSidebar();
+                });
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                    closeSidebar();
+                }
+            });
+
+            if (sidebar) {
+                sidebar.querySelectorAll('a').forEach(function(link) {
+                    link.addEventListener('click', function() {
+                        if (window.innerWidth < 768) {
+                            closeSidebar();
+                        }
+                    });
+                });
+            }
+        })();
+
+        // --------------------------------------------------------------
+        // 2. SCROLLSPY
+        // --------------------------------------------------------------
+        (function() {
+            const sections = document.querySelectorAll('.sl-section-block[id]');
+            const navLinks = document.querySelectorAll('.sl-sidebar .sl-menu a');
+
+            function updateActiveLink() {
+                let currentSectionId = '';
+                let minDistance = Infinity;
+                const headerOffset = 80;
+
+                sections.forEach(function(section) {
+                    const rect = section.getBoundingClientRect();
+                    const distance = Math.abs(rect.top - headerOffset);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        currentSectionId = section.id;
+                    }
+                });
+
+                if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10) {
+                    const lastSection = sections[sections.length - 1];
+                    if (lastSection) {
+                        currentSectionId = lastSection.id;
+                    }
+                }
+
+                navLinks.forEach(function(link) {
+                    link.classList.remove('sl-active');
+                    const href = link.getAttribute('href');
+                    if (href === '#' + currentSectionId) {
+                        link.classList.add('sl-active');
+                    }
+                });
+            }
+
+            let ticking = false;
+            window.addEventListener('scroll', function() {
+                if (!ticking) {
+                    window.requestAnimationFrame(function() {
+                        updateActiveLink();
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            });
+
+            window.addEventListener('load', updateActiveLink);
+        })();
+
+        // --------------------------------------------------------------
+        // 3. DROPDOWN
+        // --------------------------------------------------------------
+        (function() {
+            document.querySelectorAll('.sl-dropdown').forEach(function(dropdown) {
+                var toggle = dropdown.querySelector('.sl-toggle');
+                if (toggle) {
+                    toggle.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        dropdown.classList.toggle('sl-open');
+                    });
+                }
+            });
+
+            document.addEventListener('click', function() {
+                document.querySelectorAll('.sl-dropdown').forEach(function(d) {
+                    d.classList.remove('sl-open');
+                });
+            });
+        })();
+
+        // --------------------------------------------------------------
+        // 4. MODAL
+        // --------------------------------------------------------------
+        function slOpenModal(id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.add('sl-open');
+        }
+
+        function slCloseModal(id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.remove('sl-open');
+        }
+
+        document.querySelectorAll('.sl-modal-backdrop').forEach(function(backdrop) {
+            backdrop.addEventListener('click', function(e) {
+                if (e.target === backdrop) {
+                    backdrop.classList.remove('sl-open');
+                }
+            });
+        });
+
+        // --------------------------------------------------------------
+        // 5. POPUP
+        // --------------------------------------------------------------
+        function slOpenPopup(id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.add('sl-open');
+        }
+
+        function slClosePopup(id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.remove('sl-open');
+        }
+
+        document.querySelectorAll('.sl-popup').forEach(function(popup) {
+            popup.addEventListener('click', function(e) {
+                if (e.target === popup) {
+                    popup.classList.remove('sl-open');
+                }
+            });
+        });
+
+        // --------------------------------------------------------------
+        // 6. TOAST
+        // --------------------------------------------------------------
+        function slToast(icon, message, duration) {
+            duration = duration || 3200;
+            var container = document.getElementById('sl-toast-container');
+            if (!container) return;
+
+            var toast = document.createElement('div');
+            toast.className = 'sl-toast';
+            toast.innerHTML =
+                '<span class="icon">' + icon + '</span>' +
+                '<span class="msg">' + message + '</span>' +
+                '<button class="close" onclick="this.closest(\'.sl-toast\').remove()">✕</button>';
+            container.appendChild(toast);
+
+            requestAnimationFrame(function() {
+                toast.classList.add('show');
+            });
+
+            var timer = setTimeout(function() {
+                toast.classList.add('hide');
+                setTimeout(function() {
+                    if (toast.parentNode) toast.remove();
+                }, 250);
+            }, duration);
+
+            toast.querySelector('.close').addEventListener('click', function() {
+                clearTimeout(timer);
+                toast.classList.add('hide');
+                setTimeout(function() {
+                    if (toast.parentNode) toast.remove();
+                }, 250);
+            });
+        }
+
+        // --------------------------------------------------------------
+        // 7. TABS
+        // --------------------------------------------------------------
+        (function() {
+            document.querySelectorAll('.sl-tabs').forEach(function(tabs) {
+                var btns = tabs.querySelectorAll('.sl-headers .sl-tab');
+                var panels = tabs.querySelectorAll('.sl-panels .sl-panel');
+
+                btns.forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        var target = btn.dataset.tab;
+
+                        btns.forEach(function(b) {
+                            b.classList.remove('sl-active');
+                        });
+                        btn.classList.add('sl-active');
+
+                        panels.forEach(function(p) {
+                            p.classList.toggle('sl-active', p.id === target);
+                        });
+                    });
+                });
+            });
+        })();
+
+        // --------------------------------------------------------------
+        // 8. KEYBOARD: ESC to close modals & popups
+        // --------------------------------------------------------------
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.sl-modal-backdrop.sl-open').forEach(function(modal) {
+                    modal.classList.remove('sl-open');
+                });
+                document.querySelectorAll('.sl-popup.sl-open').forEach(function(popup) {
+                    popup.classList.remove('sl-open');
+                });
+                document.getElementById('manualOverlay').classList.remove('open');
+            }
+        });
+
+        // --------------------------------------------------------------
+        // 9. METER ANIMATION
+        // --------------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.sl-fill.sl-animated').forEach(function(el) {
+                var target = el.style.getPropertyValue('--sl-target');
+                if (target) {
+                    el.style.width = '0%';
+                    requestAnimationFrame(function() {
+                        el.style.width = target;
+                    });
+                }
+            });
+        });
+
+        // --------------------------------------------------------------
+        // 10. WELCOME TOAST
+        // --------------------------------------------------------------
+        setTimeout(function() {
+            slToast('✦', 'Starlight v2.3 · fixed sidebar, custom scrollbar.', 3400);
+        }, 500);
+
+        // --------------------------------------------------------------
+        // 11. CONSOLE
+        // --------------------------------------------------------------
+        console.log('┌────────────────────────────────────────────┐');
+        console.log('│  ✦ Starlight · v2.3                     │');
+        console.log('│  Paper Hacker GUI Library               │');
+        console.log('│  14 components · zero deps · hackable  │');
+        console.log('│  Fixed sidebar · custom scrollbar      │');
+        console.log('└────────────────────────────────────────────┘');
+        console.log('📐  scroll → sidebar highlights');
+        console.log('☰  click ☰ to toggle fixed sidebar');
+        console.log('📦  slToast(), slOpenModal(), slOpenPopup()');
+        console.log('📖  click "Read the full manual" for complete docs');
+    </script>
+</body>
+</html>

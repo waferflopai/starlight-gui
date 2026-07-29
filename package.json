@@ -1,0 +1,27 @@
+{
+  "name": "starlight-gui",
+  "version": "2.3.0",
+  "description": "A hackable, paper‑themed GUI library with 14+ components, zero dependencies.",
+  "main": "starlight.js",
+  "style": "starlight.css",
+  "files": [
+    "starlight.css",
+    "starlight.js"
+  ],
+  "keywords": [
+    "ui",
+    "gui",
+    "css",
+    "components",
+    "hackable",
+    "dark",
+    "paper"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/starlight-gui"
+  },
+  "homepage": "https://starlight-gui.vercel.app"
+}
